@@ -4,26 +4,26 @@ xml:lang="en" xmlns="http://www.w3.org/1999/xhtml"><HEAD><META
 content="IE=11.0000" http-equiv="X-UA-Compatible">
 <body ondragstart="window.event.returnValue=false" oncontextmenu="window.event.returnValue=false" onselectstart="event.returnValue=false">
 <META http-equiv="Content-Type" content="text/html; charset=utf-8">
-		 <TITLE>To Rebecca</TITLE>	             <LINK href="shuju/default.css" 
-rel="stylesheet" type="text/css">		 
+         <TITLE>To Rebecca</TITLE>               <LINK href="shuju/default.css" 
+rel="stylesheet" type="text/css">        
 <SCRIPT src="shuju/jquery.min.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/jscex.min.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/jscex-parser.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/jscex-jit.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/jscex-builderbase.min.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/jscex-async.min.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/jscex-async-powerpack.min.js" type="text/javascript"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/functions.js" type="text/javascript" charset="utf-8"></SCRIPT>
-		 
+         
 <SCRIPT src="shuju/love.js" type="text/javascript" charset="utf-8"></SCRIPT>
-	     
+         
 <STYLE type="text/css">
 <!--
 .STYLE1 {color: #666666}
@@ -37,16 +37,15 @@ rel="stylesheet" type="text/css">
 <DIV id="code"><FONT color="#ff0000"><SPAN class="say">* 
 Dear Rebecca, this is a special letter... </SPAN><BR><SPAN class="say"></SPAN><BR><SPAN class="say">* 
 Firstly, I would rather say it again. Nice to meet u!</SPAN><BR><SPAN class="say"></SPAN><BR><SPAN class="say">* 
-真的是超级荣幸的，昨晚那个特殊的契机，我进入你的AC房间。</SPAN><BR><SPAN class="say"></SPAN><BR><SPAN 
-class="say">* 之前是在你房间下面做个安静的听众，没想到能和Rebecca单独聊天share我们彼此的故事。</SPAN><BR><SPAN class="say"></SPAN><BR><SPAN 
-class="say">* 给我的感觉就是一种特殊的仪式感，从听到升级到2号麦，然后开始我们之间的认识，广义上了解如此优秀的、如此平凡的你。 
+真的是超级荣幸的，昨晚那个特殊的契机，我进入你的AC房间。从以前安静的听众，升级到你的2号麦，然后和Rebecca单独聊天share我们彼此的故事。</SPAN><BR><SPAN class="say"></SPAN><BR><SPAN 
+class="say">* 给我的感觉就是一种特殊的仪式感，然后开始我们之间的认识，广义上了解如此优秀的、如此平凡的你。 
 </SPAN><BR><SPAN class="say"></SPAN><BR><SPAN class="say">* 
 Sincerely and willingly, Give u the freedom… And Be ur deep friend even though our cities are so far apart. </SPAN><BR><SPAN 
 class="say"></SPAN><BR><SPAN class="say">* 
-遇见一个优秀的人是很Normal的，遇见一个很平凡的人更是Normal，但遇到如此优秀又平凡的你is my great honor. That's the CRAZY truth. </SPAN><BR><SPAN 
+遇见一个优秀或平凡的人是很Normal的，但遇到如此优秀又平凡的你is my great honor.</SPAN><BR><SPAN 
 class="say"></SPAN><BR><SPAN class="say">* 
-Always belived, I would like that our friendship boat (will) go"es" to the edge of the world in the future.</SPAN><BR><SPAN class="say"></SPAN><BR><SPAN class="say"><SPAN 
-class="space"></SPAN> --Best regards, Love, Simulink--</SPAN>			   </FONT>
+Always belived, I would like that our friendship boat (will) go"es" to the edge of the world in the future. That's the CRAZY truth. </SPAN><BR><SPAN class="say"></SPAN><BR><SPAN class="say"><SPAN 
+class="space"></SPAN> --Best regards, Love, Simulink--</SPAN>              </FONT>
 <P></P></DIV></DIV>
 <DIV id="clock-box">Since we met...</SPAN>                
    
@@ -56,7 +55,7 @@ id="canvas"></CANVAS>             </DIV></DIV>
 
     (function(){
         var canvas = $('#canvas');
-		
+        
         if (!canvas[0].getContext) {
             $("#error").show();
             return false;
@@ -144,14 +143,14 @@ id="canvas"></CANVAS>             </DIV></DIV>
 
         var growAnimate = eval(Jscex.compile("async", function () {
             do {
-    	        tree.grow();
+                tree.grow();
                 $await(Jscex.Async.sleep(10));
             } while (tree.canGrow());
         }));
 
         var flowAnimate = eval(Jscex.compile("async", function () {
             do {
-    	        tree.flower(2);
+                tree.flower(2);
                 $await(Jscex.Async.sleep(10));
             } while (tree.canFlower());
         }));
@@ -183,14 +182,14 @@ id="canvas"></CANVAS>             </DIV></DIV>
         }));
 
         var textAnimate = eval(Jscex.compile("async", function () {
-		    var together = new Date();
-		    together.setFullYear(2020,03 ,16); 			//时间年月日
-		    together.setHours(00);						//小时	
-		    together.setMinutes(28);					//分钟
-		    together.setSeconds(0);					//秒前一位
-		    together.setMilliseconds(00);				//秒第二位
+            var together = new Date();
+            together.setFullYear(2020,03 ,16);          //时间年月日
+            together.setHours(00);                      //小时    
+            together.setMinutes(28);                    //分钟
+            together.setSeconds(0);                 //秒前一位
+            together.setMilliseconds(00);               //秒第二位
 
-		    $("#code").show().typewriter();
+            $("#code").show().typewriter();
             $("#clock-box").fadeIn(500);
             while (true) {
                 timeElapse(together);
@@ -211,21 +210,21 @@ id="canvas"></CANVAS>             </DIV></DIV>
 
         runAsync().start();
     })();
-    </SCRIPT>     				     </div>
-				</div>
-			</div>
+    </SCRIPT>                        </div>
+                </div>
+            </div>
 </div>
-	<div class="bg1">	
-		<div class="main">
-			<footer style="line-height:20px">
+    <div class="bg1">   
+        <div class="main">
+            <footer style="line-height:20px">
                 <div id="copyright">
                     
                   </object>
                 </div>
-		</div>
-	</div>
+        </div>
+    </div>
 </div>
-<audio id="bgmMusic" src="http://qzone.haoduoge.com/music/C2C3F0LSXH4D771253124A26CF9C71C939B2A.mp3" preload="auto" type="audio/mp3" autoplay loop></audio>
+<audio id="bgmMusic" src="https://music.163.com/#/song?id=569734247" preload="auto" type="audio/mp3" autoplay loop></audio>
 
 </body>
 </html>
