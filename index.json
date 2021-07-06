@@ -2,4 +2,6 @@
 
   
 
-[{"categories":["Hugo"],"description":"\u003cp\u003e跨平台搭建该 github 博客的一些步骤记录。\u003c/p\u003e","tags":["Hugo"],"title":"搭建 hugo 博客","url":"https://fnesc.github.io/posts/hugosteps/"}]
+  
+
+[{"categories":["Python3"],"description":"\u003cp\u003ecollections.namedtuple 是一个工厂函数，它可以用来构建一个带字段名的元组和一个有名字的类。\u003c/p\u003e\n\u003cp\u003e但如果希望更改属性呢？\u003c/p\u003e","tags":["Python3"],"title":"不可变的具名元组 namedtuple ?","url":"https://fnesc.github.io/posts/namedtuple/"},{"categories":["Hugo"],"description":"\u003cp\u003e跨平台搭建该 github 博客的一些步骤记录。\u003c/p\u003e","tags":["Hugo"],"title":"搭建 hugo 博客","url":"https://fnesc.github.io/posts/hugosteps/"}]

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>归档 on FnEsc Hugo Site</title>
-    <link>https://fnesc.github.io/posts/</link>
-    <description>Recent content in 归档 on FnEsc Hugo Site</description>
+    <title>Python3 on FnEsc Hugo Site</title>
+    <link>https://fnesc.github.io/categories/python3/</link>
+    <description>Recent content in Python3 on FnEsc Hugo Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-Hans</language>
-    <lastBuildDate>Tue, 06 Jul 2021 19:01:19 +0800</lastBuildDate><atom:link href="https://fnesc.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 06 Jul 2021 19:01:19 +0800</lastBuildDate><atom:link href="https://fnesc.github.io/categories/python3/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>不可变的具名元组 namedtuple ?</title>
       <link>https://fnesc.github.io/posts/namedtuple/</link>
@@ -15,15 +15,6 @@
       <guid>https://fnesc.github.io/posts/namedtuple/</guid>
       <description>&lt;p&gt;collections.namedtuple 是一个工厂函数，它可以用来构建一个带字段名的元组和一个有名字的类。&lt;/p&gt;
 &lt;p&gt;但如果希望更改属性呢？&lt;/p&gt;</description>
-    </item>
-    
-    <item>
-      <title>搭建 hugo 博客</title>
-      <link>https://fnesc.github.io/posts/hugosteps/</link>
-      <pubDate>Sun, 04 Jul 2021 16:19:33 +0800</pubDate>
-      
-      <guid>https://fnesc.github.io/posts/hugosteps/</guid>
-      <description>&lt;p&gt;跨平台搭建该 github 博客的一些步骤记录。&lt;/p&gt;</description>
     </item>
     
   </channel>

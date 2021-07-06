@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>不可变的具名元组 namedtuple ? | FnEsc Hugo Site</title>
+
+    
+<link href="/img/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+
+
+
+<meta name="author" content="FnEsc" />
+<meta name="description" content="collections.namedtuple 是一个工厂函数，它可以用来构建一个带字段名的元组和一个有名字的类。
+但如果希望更改属性呢？
+" />
+
+
+
+<meta name="generator" content="Hugo 0.84.4" />
+
+<link rel="canonical" href="https://fnesc.github.io/posts/namedtuple/" />
+
+
+<meta property="og:title" content="不可变的具名元组 namedtuple ?" />
+<meta property="og:description" content="collections.namedtuple 是一个工厂函数，它可以用来构建一个带字段名的元组和一个有名字的类。
+但如果希望更改属性呢？" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fnesc.github.io/posts/namedtuple/" /><meta property="og:image" content="https://fnesc.github.io/img/namedtuple_1.jpg" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-06T19:01:19+08:00" />
+<meta property="article:modified_time" content="2021-07-06T19:01:19+08:00" />
+
+
+
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://fnesc.github.io/img/namedtuple_1.jpg"/>
+
+<meta name="twitter:title" content="不可变的具名元组 namedtuple ?"/>
+<meta name="twitter:description" content="collections.namedtuple 是一个工厂函数，它可以用来构建一个带字段名的元组和一个有名字的类。
+但如果希望更改属性呢？"/>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+<link rel="stylesheet" href="/css/icomoon.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@1.13.1/css/OverlayScrollbars.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css">
+<link rel="stylesheet" href="/css/site.css" />
+
+<style>
+  .ui.header a:not(.item, .ui.button):hover {
+    text-decoration: underline;
+  }
+
+  
+  a:not(.item, .ui.button) {
+    color: seagreen !important;
+  }
+  
+
+  
+
+  
+  body.default {
+    
+    background-color: #fff;
+    
+
+    
+    background-image: url(/img/background.jpg);
+    
+  }
+  
+
+  
+</style>
+
+
+    
+
+
+
+<link rel="stylesheet" data-highlight href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/tomorrow.min.css" />
+
+
+
+
+
+
+
+    
+    <link rel="stylesheet" href="/css/custom.css" />
+    
+  </head>
+
+  <body class="default">
+    
+<nav class="ui secondary menu dream-menu dream-nav">
+
+  <a class="item dream-flip-toggle" title="翻转！">
+    <i class="large link bullseye icon"></i>
+  </a>
+  <a class="item" href="https://fnesc.github.io/" title="首页">
+    <i class="large link home icon"></i>
+  </a>
+  
+  
+</nav>
+
+    <div class="flip-container">
+      <div class="flipper">
+        <section class="front">
+          <div class="dream-max-width">
+            
+<div class="ui relaxed centered grid dream-grid dream-grid-single">
+  
+  
+  
+  
+
+  
+  <aside class="sixteen wide mobile sixteen wide tablet three wide computer column dream-single-aside">
+    
+    <div class="ui segment toc">
+      <nav id="TableOfContents">
+  <ul>
+    <li><a href="#介绍">介绍</a></li>
+    <li><a href="#namedtuple-定义和使用">namedtuple 定义和使用</a></li>
+    <li><a href="#namedtuple-一些属性和方法">namedtuple 一些属性和方法</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#record_factory-可变对象的类">record_factory 可变对象的类</a></li>
+    <li><a href="#record_factory-简单类工厂函数">record_factory 简单类工厂函数</a></li>
+    <li><a href="#record_factory-使用方法">record_factory 使用方法</a></li>
+  </ul>
+</nav>
+    </div>
+    
+
+    
+  </aside>
+  
+  <div class="sixteen wide mobile sixteen wide tablet ten wide computer column markdown-body dream-single" id="dream-save-post-as-img">
+    <section class="ui top attached segment">
+      <header>
+        <h1 class="ui large header">不可变的具名元组 namedtuple ?<span class="sub header">
+            <span class="left">
+              @
+              
+                
+                  FnEsc
+                
+              
+
+              | 
+                  <span data-format="luxon">2021-07-06T19:01:19&#43;08:00</span>
+                
+
+              | 3 分钟阅读
+
+              
+              | 更新于
+                
+                  <span data-format="luxon">2021-07-06T19:01:19&#43;08:00</span>
+                
+              
+            </span>
+
+            
+            <span class="dream-share">
+  <a href="#" class="save-as-image" title="保存为图片" onclick="savePostAsImg()">
+    <i class="save icon"></i>
+  </a>
+  <a href="https://twitter.com/intent/tweet?text=%e4%b8%8d%e5%8f%af%e5%8f%98%e7%9a%84%e5%85%b7%e5%90%8d%e5%85%83%e7%bb%84%20namedtuple%20%3f&url=https%3a%2f%2ffnesc.github.io%2fposts%2fnamedtuple%2f" title="Twitter">
+    <i class="twitter icon"></i>
+  </a>
+  <a href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2ffnesc.github.io%2fposts%2fnamedtuple%2f" title="Facebook">
+    <i class="facebook icon"></i>
+  </a>
+</span>
+
+            
+          </span>
+        </h1>
+      </header>
+
+      <article class="main">
+        
+        <img class="cover" src="/img/namedtuple_1.jpg" />
+        
+
+        <p>collections.namedtuple 是一个工厂函数，它可以用来构建一个带字段名的元组和一个有名字的类。</p>
+<p>但如果希望更改属性呢？</p>
+<h1 id="namedtuple">namedtuple</h1>
+<h2 id="介绍">介绍</h2>
+<p>用 <code>namedtuple</code> 构建的类实例所消耗的内存跟元组是一样的，因为字段名都存在对应的类里面。甚至，<code>namedtuple</code> 实例跟普通的对象实例还要小一些，因为 Python 不会用 <code>__dict__</code> 来存放这些实例的属性。</p>
+<h2 id="namedtuple-定义和使用">namedtuple 定义和使用</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-py" data-lang="py"><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">import</span> collections
+<span style="color:#f92672">&gt;&gt;&gt;</span> City <span style="color:#f92672">=</span> collections<span style="color:#f92672">.</span>namedtuple(<span style="color:#e6db74">&#34;City&#34;</span>, <span style="color:#e6db74">&#34;name country population cordinates&#34;</span>)
+<span style="color:#f92672">&gt;&gt;&gt;</span> tokyo <span style="color:#f92672">=</span> City(<span style="color:#e6db74">&#34;Tokyo&#34;</span>, <span style="color:#e6db74">&#34;JP&#34;</span>, <span style="color:#ae81ff">36.933</span>, (<span style="color:#ae81ff">35.689722</span>, <span style="color:#ae81ff">139.691667</span>))
+<span style="color:#f92672">&gt;&gt;&gt;</span> tokyo<span style="color:#f92672">.</span>cordinates
+(<span style="color:#ae81ff">35.689722</span>, <span style="color:#ae81ff">139.691667</span>)
+<span style="color:#f92672">&gt;&gt;&gt;</span> tokyo[<span style="color:#ae81ff">1</span>]
+<span style="color:#e6db74">&#39;JP&#39;</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> tokyo[<span style="color:#ae81ff">0</span>]
+<span style="color:#e6db74">&#39;Tokyo&#39;</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> tokyo[<span style="color:#ae81ff">1</span>], tokyo[<span style="color:#ae81ff">2</span>]
+(<span style="color:#e6db74">&#39;JP&#39;</span>, <span style="color:#ae81ff">36.933</span>)
+<span style="color:#f92672">&gt;&gt;&gt;</span> 
+</code></pre></div><p>可以看到，</p>
+<ul>
+<li>声明一个具名元组需要两个参数，第一个是类名，第二是类的各字段名字（这里是 <code>&quot;name country population cordinates&quot;</code>） 。</li>
+<li>实例化一个具名元组，字段存储的数据应当是一串参数的形式传入到该构造函数中，明确的说，是单一的可迭代对象（这里是 <code>&quot;Tokyo&quot;, &quot;JP&quot;, 36.933, (35.689722, 139.691667)</code> 四个参数）。</li>
+</ul>
+<blockquote>
+<p>声明具名元组的时候，各字段名字可以是字段串组成的可迭代对象，或者是由空格分割的字符串。</p>
+</blockquote>
+<h2 id="namedtuple-一些属性和方法">namedtuple 一些属性和方法</h2>
+<p>展示一些比较有用的方法和属性（接上示例）：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-py" data-lang="py"><span style="color:#f92672">&gt;&gt;&gt;</span> City<span style="color:#f92672">.</span>_fields
+(<span style="color:#e6db74">&#39;name&#39;</span>, <span style="color:#e6db74">&#39;country&#39;</span>, <span style="color:#e6db74">&#39;population&#39;</span>, <span style="color:#e6db74">&#39;cordinates&#39;</span>)  <span style="color:#75715e"># 如名，包含所有字段名称的元组</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> data <span style="color:#f92672">=</span> (<span style="color:#e6db74">&#34;Shenzhen&#34;</span>, <span style="color:#e6db74">&#34;CN&#34;</span>, <span style="color:#ae81ff">10.12</span>, (<span style="color:#ae81ff">12.34</span>, <span style="color:#ae81ff">56.78</span>))  <span style="color:#75715e"># 利用单一的可迭代对象去构造 City 具名元组</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> sz <span style="color:#f92672">=</span> City<span style="color:#f92672">.</span>_make(data)  <span style="color:#75715e"># 参数为单一的可迭代对象，构造类实例，等价与 City(*data)</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> sz
+City(name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Shenzhen&#39;</span>, country<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;CN&#39;</span>, population<span style="color:#f92672">=</span><span style="color:#ae81ff">10.12</span>, cordinates<span style="color:#f92672">=</span>(<span style="color:#ae81ff">12.34</span>, <span style="color:#ae81ff">56.78</span>))  <span style="color:#75715e"># 友好的字符串表示形式 __repr__</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> sz<span style="color:#f92672">.</span>_asdict()  <span style="color:#75715e"># 把具名元组以字典形式返回</span>
+{<span style="color:#e6db74">&#39;name&#39;</span>: <span style="color:#e6db74">&#39;Shenzhen&#39;</span>, <span style="color:#e6db74">&#39;country&#39;</span>: <span style="color:#e6db74">&#39;CN&#39;</span>, <span style="color:#e6db74">&#39;population&#39;</span>: <span style="color:#ae81ff">10.12</span>, <span style="color:#e6db74">&#39;cordinates&#39;</span>: (<span style="color:#ae81ff">12.34</span>, <span style="color:#ae81ff">56.78</span>)}  <span style="color:#75715e"># 这里使用 python 3.8.2 官方文档表示返回为 dict 而非 OrderedDict</span>
+</code></pre></div><h1 id="可变对象类工厂函数">可变对象：类工厂函数</h1>
+<h2 id="record_factory-可变对象的类">record_factory 可变对象的类</h2>
+<p>正常编写一个带多属性的类可能像下面这样写？</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-py" data-lang="py"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Dog</span>:
+    <span style="color:#66d9ef">def</span> __init__(self, name, weight, owner):
+        self<span style="color:#f92672">.</span>name <span style="color:#f92672">=</span> name
+        self<span style="color:#f92672">.</span>weight <span style="color:#f92672">=</span> weight
+        self<span style="color:#f92672">.</span>owner <span style="color:#f92672">=</span> owner
+</code></pre></div><p>这样其实太不友好了。我们参考 <code>collections.namedtuple</code> 创建一个 <code>record_factory</code> 函数，即时创建简单的类。</p>
+<h2 id="record_factory-简单类工厂函数">record_factory 简单类工厂函数</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-py" data-lang="py"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">record_factory</span>(cls_name, field_names):
+    <span style="color:#66d9ef">try</span>:
+        field_names <span style="color:#f92672">=</span> field_names<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;,&#34;</span>, <span style="color:#e6db74">&#34; &#34;</span>)<span style="color:#f92672">.</span>split()
+    <span style="color:#66d9ef">except</span> <span style="color:#a6e22e">AttributeError</span>:
+        <span style="color:#66d9ef">pass</span>    <span style="color:#75715e"># “鸭子类型”，参考 namedtuple ，如果不能 replace/split 方法，则假定本身就是标识符组成的序列</span>
+    field_names <span style="color:#f92672">=</span> tuple(field_names)
+
+    <span style="color:#66d9ef">def</span> __init__(self, <span style="color:#f92672">*</span>agrs, <span style="color:#f92672">**</span>kwargs):
+        attrs <span style="color:#f92672">=</span> dict(zip(self<span style="color:#f92672">.</span>__slots__, args))  <span style="color:#75715e"># __slots__ 阻止在实例化类时为实例分配 dict（节省内存），自动带上了 get/set 方法，但同时也不能再增加新的变量</span>
+        attrs<span style="color:#f92672">.</span>update(kwargs)
+        <span style="color:#66d9ef">for</span> name, value <span style="color:#f92672">in</span> attrs<span style="color:#f92672">.</span>items():
+            setattr(self, name, value)
+    
+    <span style="color:#66d9ef">def</span> __iter__(self):  <span style="color:#75715e"># 把实例变成可迭代的对象，按照 __slots__ 设定的顺序产出值</span>
+        <span style="color:#66d9ef">for</span> name <span style="color:#f92672">in</span> self<span style="color:#f92672">.</span>__slots__:
+            <span style="color:#66d9ef">yield</span> getattr(self, name)
+    
+    <span style="color:#66d9ef">def</span> __repr__(self):  <span style="color:#75715e"># 生成友好的字符串表示形式 </span>
+        values <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;,&#34;</span><span style="color:#f92672">.</span>join( <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{}</span><span style="color:#e6db74">=</span><span style="color:#e6db74">{!r}</span><span style="color:#e6db74">&#34;</span><span style="color:#f92672">.</span>format(<span style="color:#f92672">*</span>r) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> zip(self<span style="color:#f92672">.</span>__slots__, self) )
+        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{}</span><span style="color:#e6db74">(</span><span style="color:#e6db74">{}</span><span style="color:#e6db74">)&#34;</span><span style="color:#f92672">.</span>format(self<span style="color:#f92672">.</span>__class__<span style="color:#f92672">.</span>__name__, values)
+    
+    cls_attrs <span style="color:#f92672">=</span> dict(__slots__ <span style="color:#f92672">=</span> field_names,
+                     __init__  <span style="color:#f92672">=</span> __init__,
+                     __iter__  <span style="color:#f92672">=</span> __iter__,
+                     __repr__  <span style="color:#f92672">=</span> __repr__
+                )
+    
+    <span style="color:#66d9ef">return</span> type(cls_name, (object, ), cls_attrs)
+</code></pre></div><p>对 <code>__slots__</code> 可以详细再参考官方文档，看看纯 python 的实现方式，具有更快的属性访问速度，减少内存消耗的优点。</p>
+<p>注意，这里最后是调用了 <code>type</code> 的构造方法，构造一个新类，然后将其返回。通常 <code>type</code> 是像函数那样的使用，但也需要知道，<code>type</code> 同时也是一个类。</p>
+<p>当成类使用时候，传入三个参数可以新建一个类：<code>name</code> 、 <code>bases</code> 和 <code>dict</code>，详细可参考官方文档。</p>
+<h2 id="record_factory-使用方法">record_factory 使用方法</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-py" data-lang="py"><span style="color:#f92672">&gt;&gt;&gt;</span> Dog <span style="color:#f92672">=</span> record_factory(<span style="color:#e6db74">&#34;Dog&#34;</span>, <span style="color:#e6db74">&#34;name weight owner&#34;</span>)
+<span style="color:#f92672">&gt;&gt;&gt;</span> rex <span style="color:#f92672">=</span> Dog(<span style="color:#e6db74">&#34;Rex&#34;</span>, <span style="color:#ae81ff">30</span>, <span style="color:#e6db74">&#34;Bob&#34;</span>)  <span style="color:#75715e"># Bob 有一只名为 Rex 的狗</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> name1, weight1, _ <span style="color:#f92672">=</span> rex
+<span style="color:#f92672">&gt;&gt;&gt;</span> name1, weight1
+(<span style="color:#e6db74">&#39;Rex&#39;</span>, <span style="color:#ae81ff">30</span>)
+<span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{2}</span><span style="color:#e6db74">&#39;s dog weighs </span><span style="color:#e6db74">{1}</span><span style="color:#e6db74"> kg&#34;</span><span style="color:#f92672">.</span>format(<span style="color:#f92672">*</span>rex)
+<span style="color:#e6db74">&#34;Bob&#39;s dog weighs 30 kg&#34;</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> rex<span style="color:#f92672">.</span>weight <span style="color:#f92672">=</span> <span style="color:#ae81ff">32</span>  <span style="color:#75715e"># 注意这里是“修改”了“具名元组类”</span>
+<span style="color:#f92672">&gt;&gt;&gt;</span> rex
+Dog(name<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Rex&#39;</span>, weight<span style="color:#f92672">=</span><span style="color:#ae81ff">32</span>, owner<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Bob&#39;</span>)
+<span style="color:#f92672">&gt;&gt;&gt;</span> Dog<span style="color:#f92672">.</span>__mro__
+(<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#960050;background-color:#1e0010">&#39;</span><span style="color:#a6e22e">factories</span><span style="color:#f92672">.</span>Dog<span style="color:#e6db74">&#39;&gt;, &lt;class &#39;</span>object<span style="color:#e6db74">&#39;&gt;)  # 类继承 object，和工厂函数没有关系</span>
+</code></pre></div><p>这时候，该工厂函数就可以作为工具来使用，当希望创建可变的具名“元组”时候，可以使用该简易类了。</p>
+<blockquote>
+<p>我的一个使用情景是，在对数据的 select 返回时，作一些简单操作，利用了 _fields 属性等。</p>
+</blockquote>
+      </article>
+    </section>
+
+    
+
+    
+
+    
+  </div>
+</div>
+
+
+            <footer class="ui basic center aligned segment" style="background-color: transparent;">
+              
+              <p>© 2021 FnEsc Hugo Site</p>
+              
+
+              <p>Powered by <a href="https://gohugo.io/" target="_blank">Hugo</a> with theme <a href="https://github.com/g1eny0ung/hugo-theme-dream" target="_blank">Dream</a>.</p>
+
+              
+            </footer>
+          </div>
+        </section>
+        <section class="back">
+          <div class="dream-max-width">
+            <header class="ui basic very padded segment dream-header">
+  
+  <div class="ui small circular image">
+    <img src="/img/simulink.jpg" alt="avatar" />
+  </div>
+  
+
+  <div class="content">
+    <h1 class="ui medium header">FnEsc 的博客<span class="sub header">一边担心未来，一边浪费现在。</span>
+    </h1>
+
+    <article class="ui horizontal list">
+      
+      <a class="item" href="/posts">
+        <i class="archive icon" title="归档"></i>
+      </a>
+      
+      <a class="item" href="/categories">
+        <i class="th list icon" title="所有分类"></i>
+      </a>
+      <a class="item" href="/tags">
+        <i class="tags icon" title="所有标签"></i>
+      </a>
+    </article>
+
+    
+    
+    
+    
+    
+      
+    
+      
+    
+    
+
+    
+
+    
+    
+    
+          <div class="dream-tags">
+          
+          
+          
+            <a class="ui label" href="/tags/hugo/" title="Hugo">
+              Hugo
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/python3/" title="Python3">
+              Python3
+            </a>
+          
+          </div>
+    
+
+    
+  </div>
+</header>
+
+
+<div class="ui relaxed grid dream-grid dream-back">
+  
+  
+  
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment markdown-body">
+      <div class="ui medium header">关于我</div>
+      <p>FnEsc 的 💜 博客</p>
+<p>自从 2021.07 开始搭建该 hugo 博客，作为记录一些生活/技术上的小笔记</p>
+<p>2020届应届生，毕业与佛山科学技术学院计算机科学与技术专业</p>
+<p>目前职业是 <del>全栈开发程序🐶</del> 打杂工具人</p>
+<p>作为传统行业外企电商的 965，使我并没有很勤奋卷</p>
+<p>不想那么相关工作为 SAP Fiori 应用开发和维护。</p>
+<p>目前主要的技术栈是：</p>
+<blockquote>
+<ul>
+<li>Python Web 端架构</li>
+<li>Django / Odoo 开发</li>
+</ul>
+</blockquote>
+<p>接下来可能想学习的方向是：</p>
+<blockquote>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> python 进阶</li>
+<li><input disabled="" type="checkbox"> Go 开始学习</li>
+<li><input disabled="" type="checkbox"> 其他 B 端架构学习</li>
+</ul>
+</blockquote>
+    </article>
+  </div>
+  
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment markdown-body">
+      <div class="ui medium header">我的一些开源代码</div>
+      <ul>
+<li><a href="https://github.com/fnesc/University_Projects_Code">University_Projects_Code 🌺</a> ➡️ 大学期间的一些代码记录</li>
+<li><a href="https://github.com/fnesc/Mysql-Injection">Mysql-Injection 🌱</a> ➡️ Mysql 注入天书学习笔记</li>
+<li>其他的就匿了</li>
+</ul>
+<p><a href="https://github.com/fnesc">&raquo;我的github地址&laquo;</a></p>
+
+    </article>
+  </div>
+  
+
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment">
+      <div class="ui medium header">社交链接</div>
+      <nav class="ui secondary menu dream-menu dream-socials">
+  
+
+  
+  <a class="item" href="mailto:smlin97@outlook.com">
+    <i class="large mail icon" title="Email"></i>
+  </a>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <a class="item" href="https://github.com/fnesc" target="_blank">
+    <i class="large github icon" title="GitHub"></i>
+  </a>
+  
+
+  
+
+  
+</nav>
+
+    </article>
+  </div>
+
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    
+  </div>
+
+  
+</div>
+
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+
+    
+
+    
+
+    <script>
+  window.background = "#fff"
+  window.defaultDark =  null 
+  window.backgroundDark =  null 
+  window.backgroundImageDark =  null 
+  window.darkNav =  null 
+  window.maxTags =  null 
+  window.hasTwitterEmbed =  null 
+  window.fixedNav =  true 
+
+  if (window.hasTwitterEmbed) {
+    
+    window.twttr = (function (d, s, id) {
+      var js,
+        fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {}
+      if (d.getElementById(id)) return t
+      js = d.createElement(s)
+      js.id = id
+      js.src = 'https://platform.twitter.com/widgets.js'
+      fjs.parentNode.insertBefore(js, fjs)
+
+      t._e = []
+      t.ready = function (f) {
+        t._e.push(f)
+      }
+
+      return t
+    })(document, 'script', 'twitter-wjs')
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@1.13.1/js/jquery.overlayScrollbars.min.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/theme.js"></script>
+
+    
+
+
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
+
+<script>
+  format()
+
+  function format() {
+    $('span[data-format="luxon"]').each(function () {
+      var date = $(this).text()
+
+      $(this).text(luxon.DateTime.fromISO(date, { locale: "zh" }).toFormat("yyyy年MM月dd日"))
+    })
+  }
+</script>
+
+
+
+<script src="/js/scrollToTop.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+
+
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/clojure.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ocaml.min.js"></script>
+
+
+
+<script>
+  hljs.highlightAll()
+  setHighlightTheme()
+
+  function setHighlightTheme() {
+    var isDark = localStore.getItem('hugo-theme-dream-is-dark')
+    isDark = isDark ? isDark : window.defaultDark ? 'y' : isDark
+
+    var lightTheme = "tomorrow"
+    var darkTheme = "tomorrow-night"
+    var theme = isDark === 'y' ? darkTheme : lightTheme
+
+    $('link[data-highlight]').attr('href', 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/' + theme + '.min.css')
+    $('pre').css('background', isDark === 'y' ? '#333' : '')
+  }
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.1"></script>
+<script src="/js/post.js" defer></script>
+
+
+    
+
+    
+  </body>
+</html>
