@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MySQL on FnEsc Hugo Site</title>
+    <link>https://fnesc.github.io/categories/mysql/</link>
+    <description>Recent content in MySQL on FnEsc Hugo Site</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-Hans</language>
+    <lastBuildDate>Thu, 08 Jul 2021 11:06:29 +0800</lastBuildDate><atom:link href="https://fnesc.github.io/categories/mysql/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL 45 讲学习笔记 ☞ 01 基础架构</title>
+      <link>https://fnesc.github.io/posts/sql45_1/</link>
+      <pubDate>Thu, 08 Jul 2021 11:06:29 +0800</pubDate>
+      
+      <guid>https://fnesc.github.io/posts/sql45_1/</guid>
+      <description>&lt;p&gt;极客时间 MySQL 实战 45 讲基础架构篇笔记——01丨基础架构：一条SQL查询语句是如何执行的？&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

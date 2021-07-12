@@ -118,6 +118,24 @@
   
 
   
+  <aside class="sixteen wide mobile sixteen wide tablet three wide computer column dream-single-aside">
+    
+    <div class="ui segment toc">
+      <nav id="TableOfContents">
+  <ul>
+    <li><a href="#安装-hugo">安装 Hugo</a></li>
+    <li><a href="#在-vs-code-环境下直接写博文">在 vs code 环境下直接写博文</a></li>
+    <li><a href="#运行-hugo">运行 hugo</a></li>
+    <li><a href="#构建提交">构建提交</a></li>
+    <li><a href="#参考链接">参考链接</a></li>
+  </ul>
+</nav>
+    </div>
+    
+
+    
+  </aside>
+  
   <div class="sixteen wide mobile sixteen wide tablet ten wide computer column markdown-body dream-single" id="dream-save-post-as-img">
     <section class="ui top attached segment">
       <header>
@@ -168,7 +186,7 @@
         
 
         <p>跨平台搭建该 github 博客的一些步骤记录。</p>
-<h1 id="安装-hugo">安装 Hugo</h1>
+<h2 id="安装-hugo">安装 Hugo</h2>
 <p>在这里提供简单的操作，本人是在 win10 环境下直接安装 hugo 博客二进制文件的，无需解决 go 环境或者其他依赖，快速搭建。<a href="https://github.com/gohugoio/hugo/releases">传送门</a></p>
 <p>如果是在 Linux 下的，直接安装 hugo 即可。途中如果出现一些不太重要的错误，直接重装 hugo 就好了，要的就是简单快捷。</p>
 <p>三两行命令的事情：</p>
@@ -176,13 +194,15 @@
 dpkg -i hugo_0.58.2_Linux-64bit.deb
 apt-get install -f <span style="color:#75715e"># Ubuntu</span>
 hugo version
-</code></pre></div><h1 id="在-vs-code-环境下直接写博文">在 vs code 环境下直接写博文</h1>
+</code></pre></div><h2 id="在-vs-code-环境下直接写博文">在 vs code 环境下直接写博文</h2>
 <p>本人使用 win10 下直接 gitExtension 做一个 blog 的 privte 仓库，hugo 构建后直接部署至 fnesc.github.io 仓库。</p>
 <blockquote>
 <p>当然，在此之前，已经把该仓库之前的代码迁移到 <a href="https://github.com/FnEsc/FnEsc.github.io/tree/past24">past24 分支</a>了，然后这里就相当于全新了。</p>
 </blockquote>
 <p>如： <code>.\hugo.exe new posts/hugoSteps.md</code></p>
-<h1 id="构建提交">构建提交</h1>
+<h2 id="运行-hugo">运行 hugo</h2>
+<p>执行 <code>.\hugo.exe server -D</code> 表示直接运行，包括草稿状态。</p>
+<h2 id="构建提交">构建提交</h2>
 <p>构建命令：<code>.\hugo.exe -D</code></p>
 <blockquote>
 <p><code>-D</code> 参数表示 <code>--buildDrafts </code></p>
@@ -197,7 +217,7 @@ $ git push -u origin master
 </code></pre></div><blockquote>
 <p>若遇上拒绝合并无关历史的错误，先允许历史拉取，再上传：<code>git pull origin master --allow-unrelated-histories</code></p>
 </blockquote>
-<h1 id="参考链接">参考链接</h1>
+<h2 id="参考链接">参考链接</h2>
 <ol>
 <li><a href="https://g1eny0ung.site/hugo-theme-dream/#/quick-start">hugo 主题 Quick-Start</a></li>
 <li><a href="https://github1s.com/g1eny0ung/blog">hugo 主题示例源码</a></li>
@@ -261,6 +281,12 @@ $ git push -u origin master
     
       
     
+      
+    
+      
+    
+      
+    
     
 
     
@@ -278,8 +304,26 @@ $ git push -u origin master
           
           
           
+            <a class="ui label" href="/tags/mysql/" title="MySQL">
+              MySQL
+            </a>
+          
+          
+          
             <a class="ui label" href="/tags/python3/" title="Python3">
               Python3
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/tag1/" title="tag1">
+              tag1
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/tag2/" title="tag2">
+              tag2
             </a>
           
           </div>
@@ -314,6 +358,7 @@ $ git push -u origin master
 <blockquote>
 <ul>
 <li><input checked="" disabled="" type="checkbox"> python 进阶</li>
+<li><input disabled="" type="checkbox"> MySQL 知识巩固</li>
 <li><input disabled="" type="checkbox"> Go 开始学习</li>
 <li><input disabled="" type="checkbox"> 其他 B 端架构学习</li>
 </ul>

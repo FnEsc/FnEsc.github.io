@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>MySQL 45 讲学习笔记 ☞ 01 基础架构 | FnEsc Hugo Site</title>
+
+    
+<link href="/img/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+
+
+
+<meta name="author" content="FnEsc" />
+<meta name="description" content="极客时间 MySQL 实战 45 讲基础架构篇笔记——01丨基础架构：一条SQL查询语句是如何执行的？
+" />
+
+
+
+<meta name="generator" content="Hugo 0.84.4" />
+
+<link rel="canonical" href="https://fnesc.github.io/posts/sql45_1/" />
+
+
+<meta property="og:title" content="MySQL 45 讲学习笔记 ☞ 01 基础架构" />
+<meta property="og:description" content="极客时间 MySQL 实战 45 讲基础架构篇笔记——01丨基础架构：一条SQL查询语句是如何执行的？" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fnesc.github.io/posts/sql45_1/" /><meta property="og:image" content="https://fnesc.github.io/img/background.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-08T11:06:29+08:00" />
+<meta property="article:modified_time" content="2021-07-08T11:06:29+08:00" />
+
+
+
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://fnesc.github.io/img/background.jpg"/>
+
+<meta name="twitter:title" content="MySQL 45 讲学习笔记 ☞ 01 基础架构"/>
+<meta name="twitter:description" content="极客时间 MySQL 实战 45 讲基础架构篇笔记——01丨基础架构：一条SQL查询语句是如何执行的？"/>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+<link rel="stylesheet" href="/css/icomoon.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@1.13.1/css/OverlayScrollbars.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css">
+<link rel="stylesheet" href="/css/site.css" />
+
+<style>
+  .ui.header a:not(.item, .ui.button):hover {
+    text-decoration: underline;
+  }
+
+  
+  a:not(.item, .ui.button) {
+    color: seagreen !important;
+  }
+  
+
+  
+
+  
+  body.default {
+    
+    background-color: #fff;
+    
+
+    
+    background-image: url(/img/background.jpg);
+    
+  }
+  
+
+  
+</style>
+
+
+    
+
+
+
+<link rel="stylesheet" data-highlight href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/tomorrow.min.css" />
+
+
+
+
+
+
+
+    
+    <link rel="stylesheet" href="/css/custom.css" />
+    
+  </head>
+
+  <body class="default">
+    
+<nav class="ui secondary menu dream-menu dream-nav">
+
+  <a class="item dream-flip-toggle" title="翻转！">
+    <i class="large link bullseye icon"></i>
+  </a>
+  <a class="item" href="https://fnesc.github.io/" title="首页">
+    <i class="large link home icon"></i>
+  </a>
+  
+  
+</nav>
+
+    <div class="flip-container">
+      <div class="flipper">
+        <section class="front">
+          <div class="dream-max-width">
+            
+<div class="ui relaxed centered grid dream-grid dream-grid-single">
+  
+  
+  
+  
+
+  
+  <aside class="sixteen wide mobile sixteen wide tablet three wide computer column dream-single-aside">
+    
+    <div class="ui segment toc">
+      <nav id="TableOfContents">
+  <ul>
+    <li><a href="#server-层">Server 层</a>
+      <ul>
+        <li><a href="#连接器">连接器</a></li>
+        <li><a href="#查询缓存">查询缓存</a></li>
+        <li><a href="#分析器">分析器</a></li>
+        <li><a href="#优化器">优化器</a></li>
+        <li><a href="#执行器">执行器</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+    </div>
+    
+
+    
+  </aside>
+  
+  <div class="sixteen wide mobile sixteen wide tablet ten wide computer column markdown-body dream-single" id="dream-save-post-as-img">
+    <section class="ui top attached segment">
+      <header>
+        <h1 class="ui large header">MySQL 45 讲学习笔记 ☞ 01 基础架构<span class="sub header">
+            <span class="left">
+              @
+              
+                
+                  FnEsc
+                
+              
+
+              | 
+                  <span data-format="luxon">2021-07-08T11:06:29&#43;08:00</span>
+                
+
+              | 5 分钟阅读
+
+              
+              | 更新于
+                
+                  <span data-format="luxon">2021-07-08T11:06:29&#43;08:00</span>
+                
+              
+            </span>
+
+            
+            <span class="dream-share">
+  <a href="#" class="save-as-image" title="保存为图片" onclick="savePostAsImg()">
+    <i class="save icon"></i>
+  </a>
+  <a href="https://twitter.com/intent/tweet?text=MySQL%2045%20%e8%ae%b2%e5%ad%a6%e4%b9%a0%e7%ac%94%e8%ae%b0%20%e2%98%9e%2001%20%e5%9f%ba%e7%a1%80%e6%9e%b6%e6%9e%84&url=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_1%2f" title="Twitter">
+    <i class="twitter icon"></i>
+  </a>
+  <a href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_1%2f" title="Facebook">
+    <i class="facebook icon"></i>
+  </a>
+</span>
+
+            
+          </span>
+        </h1>
+      </header>
+
+      <article class="main">
+        
+
+        <p>极客时间 MySQL 实战 45 讲基础架构篇笔记——01丨基础架构：一条SQL查询语句是如何执行的？</p>
+<h1 id="mysql-基础结构示意图">MySQL 基础结构示意图</h1>
+<p>如下是MySQL的基础架构示意图，可以分为 Server 层和存储引擎层两部分。</p>
+<p><img src="/img/mysql45_1.png" alt="MySQL 基础结构示意图"></p>
+<p>Server 层包括<strong>连接器、查询缓存、分析器、优化器、执行器</strong>等，涵盖 MySQL 的大多数核心服务功能，以及所有的内置函数（如日期、时间、数学和加密函数等），所有跨存储引擎的功能都在这一层实现，比如存储过程、触发器、视图等。</p>
+<p>而存储引擎层负责数据的存储和提取。其架构模式是插件式的，支持 <strong>InnoDB、MyISAM、Memory</strong> 等多个存储引擎。现在最常用的存储引擎是 InnoDB，它从 MySQL 5.5.5 版本开始成为了默认存储引擎。</p>
+<blockquote>
+<p>create table 语句中使用 engine=memory, 来指定使用内存引擎创建表。</p>
+</blockquote>
+<h2 id="server-层">Server 层</h2>
+<p><code>mysql&gt; select * from T where ID=10;</code> 在 MySQL 内部的执行过程是怎样的呢？</p>
+<h3 id="连接器">连接器</h3>
+<p>连接器负责跟客户端建立连接、获取权限、维持和管理连接。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">mysql -h$ip -P$port -u$user -p  <span style="color:#75715e"># -p 参数表示在交互对话里输入密码</span>
+</code></pre></div><p>mysql 是客户端工具，用来跟服务端建立连接。在完成经典的 TCP 握手后，连接器就要开始认证你的身份：</p>
+<ul>
+<li>如果用户名或密码不对，你就会收到一个&quot;Access denied for user&quot;的错误，然后客户端程序结束执行。</li>
+<li>如果用户名密码认证通过，连接器会到权限表里面查出你拥有的权限。之后，这个连接里面的权限判断逻辑，都将依赖于此时读到的权限。</li>
+</ul>
+<blockquote>
+<p>注意：由上面第二点得知，一个用户成功建立连接后，即使你用管理员账号对这个用户的权限做了修改，也不会影响已经存在连接的权限。修改完成后，只有再新建的连接才会使用新的权限设置。</p>
+</blockquote>
+<p>连接完成后，可以执行 <code>show processlist</code> 查看连接状态。默认长时间无操作，服务端主动断开时长为 8h，由参数 wait_timeout 控制。如果在连接被断开之后，客户端再次发送请求的话，就会收到一个错误提醒： <code>Lost connection to MySQL server during query</code>。此时重连即可。</p>
+<p>数据库的长连接和短连接：</p>
+<ol>
+<li>长连接：指连接成功后，如果客户端持续有请求，则一直使用同一个连接。</li>
+<li>指每次执行完很少的几次查询就断开连接，下次查询再重新建立一个。</li>
+</ol>
+<p>建立连接的过程通常是比较复杂的，所以建议在使用中尽量使用长连接。</p>
+<p>但是全部使用长连接后，你可能会发现，有些时候 MySQL 占用内存涨得特别快，这是因为 MySQL 在执行过程中临时使用的内存是管理在连接对象里面的。这些资源会在连接断开的时候才释放。所以如果长连接累积下来，可能导致内存占用太大，被系统强行杀掉（OOM），从现象看就是 MySQL 异常重启了。</p>
+<p>怎么解决这个问题呢？你可以考虑以下两种方案：</p>
+<ol>
+<li>定期断开长连接。使用一段时间，或者程序里面判断执行过一个占用内存的大查询后，断开连接，之后要查询再重连。</li>
+<li>如果你用的是 MySQL 5.7 或更新版本，可以在每次执行一个比较大的操作后，通过执行 mysql_reset_connection 来重新初始化连接资源。这个过程不需要重连和重新做权限验证，但是会将连接恢复到刚刚创建完时的状态。</li>
+</ol>
+<h3 id="查询缓存">查询缓存</h3>
+<p>连接建立完成后，执行逻辑就会来到第二步：查询缓存。</p>
+<p>MySQL 拿到一个查询请求后，会先到查询缓存看看，之前是不是执行过这条语句。之前执行过的语句及其结果可能会以 key-value 对的形式，被直接缓存在内存中。key 是查询的语句，value 是查询的结果。如果你的查询能够直接在这个缓存中找到 key，那么这个 value 就会被直接返回给客户端。</p>
+<p>如果语句不在查询缓存中，就会继续后面的执行阶段。执行完成后，执行结果会被存入查询缓存中。你可以看到，如果查询命中缓存，MySQL 不需要执行后面的复杂操作，就可以直接返回结果，这个效率会很高。</p>
+<p><strong>但需要注意的是，查询缓存往往弊大于利。</strong></p>
+<p>查询缓存的失效非常频繁，只要有对一个表的更新，跟这个表相关的查询缓存都会被清空。（MySQL 8.0 版本直接将查询缓存的整块功能删掉了）</p>
+<h3 id="分析器">分析器</h3>
+<p>如果没有命中查询缓存，就要开始真正执行语句了。首先，MySQL 需要知道你要做什么，因此需要对 SQL 语句做解析。</p>
+<p>分析器先会做“词法分析”。你输入的是由多个字符串和空格组成的一条 SQL 语句，MySQL 需要识别出里面的字符串分别是什么，代表什么。</p>
+<p>MySQL 从你输入的&quot;select&quot;这个关键字识别出来，这是一个查询语句。它也要把字符串 “T” 识别成 “表名 T”，把字符串 “ID” 识别成 “列 ID”。</p>
+<p>做完了这些识别以后，就要做“语法分析”。根据词法分析的结果，语法分析器会根据语法规则，判断你输入的这个 SQL 语句是否满足 MySQL 语法。</p>
+<p>如果你的语句不对，就会收到 <code>You have an error in your SQL syntax</code> 的错误提醒。</p>
+<p>一般语法错误会提示第一个出现错误的位置，所以你要关注的是紧接“use near”的内容。</p>
+<h3 id="优化器">优化器</h3>
+<p>经过了分析器，MySQL 就知道你要做什么了。在开始执行之前，还要先经过优化器的处理。</p>
+<p>优化器是在表里面有多个索引的时候，决定使用哪个索引；或者在一个语句有多表关联（join）的时候，决定各个表的连接顺序。</p>
+<h3 id="执行器">执行器</h3>
+<p>MySQL 通过分析器知道了你要做什么，通过优化器知道了该怎么做，于是就进入了执行器阶段，开始执行语句。</p>
+<p>开始执行的时候，要先判断一下你对这个表 T 有没有执行查询的权限，如果没有，就会返回没有权限的错误，如下所示 (在工程实现上，如果命中查询缓存，会在查询缓存返回结果的时候，做权限验证。查询也会在优化器之前调用 precheck 验证权限)。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">from</span> T <span style="color:#66d9ef">where</span> ID<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>;
+ERROR <span style="color:#ae81ff">1142</span> (<span style="color:#ae81ff">42000</span>): <span style="color:#66d9ef">SELECT</span> command denied <span style="color:#66d9ef">to</span> <span style="color:#66d9ef">user</span> <span style="color:#e6db74">&#39;b&#39;</span><span style="color:#f92672">@</span><span style="color:#e6db74">&#39;localhost&#39;</span> <span style="color:#66d9ef">for</span> <span style="color:#66d9ef">table</span> <span style="color:#e6db74">&#39;T&#39;</span>
+</code></pre></div><p>如果有权限，就打开表继续执行。打开表的时候，执行器就会根据表的引擎定义，去使用这个引擎提供的接口。</p>
+<p>比如我们这个例子中的表 T 中，ID 字段没有索引，那么执行器的执行流程是这样的：</p>
+<ol>
+<li>调用 InnoDB 引擎接口取这个表的第一行，判断 ID 值是不是 10，如果不是则跳过，如果是则将这行存在结果集中；</li>
+<li>调用引擎接口取“下一行”，重复相同的判断逻辑，直到取到这个表的最后一行。</li>
+<li>执行器将上述遍历过程中所有满足条件的行组成的记录集作为结果集返回给客户端。</li>
+</ol>
+<p>至此，这个语句就执行完成了。</p>
+<blockquote>
+<p>对于有索引的表，执行的逻辑也差不多。第一次调用的是“取满足条件的第一行”这个接口，之后循环取“满足条件的下一行”这个接口，这些接口都是引擎中已经定义好的。</p>
+</blockquote>
+      </article>
+    </section>
+
+    
+
+    
+
+    
+  </div>
+</div>
+
+
+            <footer class="ui basic center aligned segment" style="background-color: transparent;">
+              
+              <p>© 2021 FnEsc Hugo Site</p>
+              
+
+              <p>Powered by <a href="https://gohugo.io/" target="_blank">Hugo</a> with theme <a href="https://github.com/g1eny0ung/hugo-theme-dream" target="_blank">Dream</a>.</p>
+
+              
+            </footer>
+          </div>
+        </section>
+        <section class="back">
+          <div class="dream-max-width">
+            <header class="ui basic very padded segment dream-header">
+  
+  <div class="ui small circular image">
+    <img src="/img/simulink.jpg" alt="avatar" />
+  </div>
+  
+
+  <div class="content">
+    <h1 class="ui medium header">FnEsc 的博客<span class="sub header">一边担心未来，一边浪费现在。</span>
+    </h1>
+
+    <article class="ui horizontal list">
+      
+      <a class="item" href="/posts">
+        <i class="archive icon" title="归档"></i>
+      </a>
+      
+      <a class="item" href="/categories">
+        <i class="th list icon" title="所有分类"></i>
+      </a>
+      <a class="item" href="/tags">
+        <i class="tags icon" title="所有标签"></i>
+      </a>
+    </article>
+
+    
+    
+    
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+    
+
+    
+
+    
+    
+    
+          <div class="dream-tags">
+          
+          
+          
+            <a class="ui label" href="/tags/hugo/" title="Hugo">
+              Hugo
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/mysql/" title="MySQL">
+              MySQL
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/python3/" title="Python3">
+              Python3
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/tag1/" title="tag1">
+              tag1
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/tag2/" title="tag2">
+              tag2
+            </a>
+          
+          </div>
+    
+
+    
+  </div>
+</header>
+
+
+<div class="ui relaxed grid dream-grid dream-back">
+  
+  
+  
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment markdown-body">
+      <div class="ui medium header">关于我</div>
+      <p>FnEsc 的 💜 博客</p>
+<p>自从 2021.07 开始搭建该 hugo 博客，作为记录一些生活/技术上的小笔记</p>
+<p>2020届应届生，毕业与佛山科学技术学院计算机科学与技术专业</p>
+<p>目前职业是 <del>全栈开发程序🐶</del> 打杂工具人</p>
+<p>作为传统行业外企电商的 965，使我并没有很勤奋卷</p>
+<p>不想那么相关工作为 SAP Fiori 应用开发和维护。</p>
+<p>目前主要的技术栈是：</p>
+<blockquote>
+<ul>
+<li>Python Web 端架构</li>
+<li>Django / Odoo 开发</li>
+</ul>
+</blockquote>
+<p>接下来可能想学习的方向是：</p>
+<blockquote>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> python 进阶</li>
+<li><input disabled="" type="checkbox"> MySQL 知识巩固</li>
+<li><input disabled="" type="checkbox"> Go 开始学习</li>
+<li><input disabled="" type="checkbox"> 其他 B 端架构学习</li>
+</ul>
+</blockquote>
+    </article>
+  </div>
+  
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment markdown-body">
+      <div class="ui medium header">我的一些开源代码</div>
+      <ul>
+<li><a href="https://github.com/fnesc/University_Projects_Code">University_Projects_Code 🌺</a> ➡️ 大学期间的一些代码记录</li>
+<li><a href="https://github.com/fnesc/Mysql-Injection">Mysql-Injection 🌱</a> ➡️ Mysql 注入天书学习笔记</li>
+<li>其他的就匿了</li>
+</ul>
+<p><a href="https://github.com/fnesc">&raquo;我的github地址&laquo;</a></p>
+
+    </article>
+  </div>
+  
+
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment">
+      <div class="ui medium header">社交链接</div>
+      <nav class="ui secondary menu dream-menu dream-socials">
+  
+
+  
+  <a class="item" href="mailto:smlin97@outlook.com">
+    <i class="large mail icon" title="Email"></i>
+  </a>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <a class="item" href="https://github.com/fnesc" target="_blank">
+    <i class="large github icon" title="GitHub"></i>
+  </a>
+  
+
+  
+
+  
+</nav>
+
+    </article>
+  </div>
+
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    
+  </div>
+
+  
+</div>
+
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+
+    
+
+    
+
+    <script>
+  window.background = "#fff"
+  window.defaultDark =  null 
+  window.backgroundDark =  null 
+  window.backgroundImageDark =  null 
+  window.darkNav =  null 
+  window.maxTags =  null 
+  window.hasTwitterEmbed =  null 
+  window.fixedNav =  true 
+
+  if (window.hasTwitterEmbed) {
+    
+    window.twttr = (function (d, s, id) {
+      var js,
+        fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {}
+      if (d.getElementById(id)) return t
+      js = d.createElement(s)
+      js.id = id
+      js.src = 'https://platform.twitter.com/widgets.js'
+      fjs.parentNode.insertBefore(js, fjs)
+
+      t._e = []
+      t.ready = function (f) {
+        t._e.push(f)
+      }
+
+      return t
+    })(document, 'script', 'twitter-wjs')
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@1.13.1/js/jquery.overlayScrollbars.min.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/theme.js"></script>
+
+    
+
+
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
+
+<script>
+  format()
+
+  function format() {
+    $('span[data-format="luxon"]').each(function () {
+      var date = $(this).text()
+
+      $(this).text(luxon.DateTime.fromISO(date, { locale: "zh" }).toFormat("yyyy年MM月dd日"))
+    })
+  }
+</script>
+
+
+
+<script src="/js/scrollToTop.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+
+
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/clojure.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ocaml.min.js"></script>
+
+
+
+<script>
+  hljs.highlightAll()
+  setHighlightTheme()
+
+  function setHighlightTheme() {
+    var isDark = localStore.getItem('hugo-theme-dream-is-dark')
+    isDark = isDark ? isDark : window.defaultDark ? 'y' : isDark
+
+    var lightTheme = "tomorrow"
+    var darkTheme = "tomorrow-night"
+    var theme = isDark === 'y' ? darkTheme : lightTheme
+
+    $('link[data-highlight]').attr('href', 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/' + theme + '.min.css')
+    $('pre').css('background', isDark === 'y' ? '#333' : '')
+  }
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.1"></script>
+<script src="/js/post.js" defer></script>
+
+
+    
+
+    
+  </body>
+</html>
