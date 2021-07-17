@@ -132,6 +132,9 @@
       </ul>
     </li>
     <li><a href="#q5-索引冗余了吗">Q5: 索引冗余了吗？</a></li>
+    <li><a href="#q6-当备库用single-transaction-做逻辑备份的时候如果从主库的-binlog-传来一个-ddl-语句会怎么样">Q6: 当备库用–single-transaction 做逻辑备份的时候，如果从主库的 binlog 传来一个 DDL 语句会怎么样？</a></li>
+    <li><a href="#q7-删除一个表里面的前-10000-行数据哪个语句会更好">Q7: 删除一个表里面的前 10000 行数据，哪个语句会更好？</a></li>
+    <li><a href="#q8-更新不了">Q8: 更新不了？</a></li>
   </ul>
 </nav>
     </div>
@@ -156,7 +159,7 @@
                   <span data-format="luxon">2021-07-12T11:46:12&#43;08:00</span>
                 
 
-              | 3 分钟阅读
+              | 4 分钟阅读
 
               
             </span>
@@ -253,6 +256,137 @@
 <p>索引均会记录主键部分，回表用。</p>
 </blockquote>
 <p>可见，索引 ca 就是多余的了。</p>
+<h2 id="q6-当备库用single-transaction-做逻辑备份的时候如果从主库的-binlog-传来一个-ddl-语句会怎么样">Q6: 当备库用–single-transaction 做逻辑备份的时候，如果从主库的 binlog 传来一个 DDL 语句会怎么样？</h2>
+<p>列出备份过程的关键语句：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">Q1:<span style="color:#66d9ef">SET</span> <span style="color:#66d9ef">SESSION</span> <span style="color:#66d9ef">TRANSACTION</span> <span style="color:#66d9ef">ISOLATION</span> <span style="color:#66d9ef">LEVEL</span> <span style="color:#66d9ef">REPEATABLE</span> <span style="color:#66d9ef">READ</span>; <span style="color:#75715e">-- 确保在 RR 隔离级别 
+</span><span style="color:#75715e"></span>Q2:<span style="color:#66d9ef">START</span> <span style="color:#66d9ef">TRANSACTION</span>  <span style="color:#66d9ef">WITH</span> CONSISTENT SNAPSHOT; <span style="color:#75715e">-- 确保这个语句执行完就可以得到一个一致性视图
+</span><span style="color:#75715e"></span><span style="color:#75715e">/* other tables */</span>
+Q3:SAVEPOINT sp; <span style="color:#75715e">-- 设置一个保存点
+</span><span style="color:#75715e"></span><span style="color:#75715e">/* 时刻 1 */</span>
+Q4:<span style="color:#66d9ef">show</span> <span style="color:#66d9ef">create</span> <span style="color:#66d9ef">table</span> <span style="color:#f92672">`</span>t1<span style="color:#f92672">`</span>; <span style="color:#75715e">-- 拿到表结构
+</span><span style="color:#75715e"></span><span style="color:#75715e">/* 时刻 2 */</span>
+Q5:<span style="color:#66d9ef">SELECT</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">FROM</span> <span style="color:#f92672">`</span>t1<span style="color:#f92672">`</span>; <span style="color:#75715e">-- 导数据
+</span><span style="color:#75715e"></span><span style="color:#75715e">/* 时刻 3 */</span>
+Q6:<span style="color:#66d9ef">ROLLBACK</span> <span style="color:#66d9ef">TO</span> SAVEPOINT sp; <span style="color:#75715e">-- 回滚，释放 t1 的 MDL
+</span><span style="color:#75715e"></span><span style="color:#75715e">/* 时刻 4 */</span>
+<span style="color:#75715e">/* other tables */</span>
+</code></pre></div><p>参考答案如下：</p>
+<ol>
+<li>如果在 Q4 语句执行之前到达，现象：没有影响，备份拿到的是 DDL 后的表结构。</li>
+<li>如果在“时刻 2”到达，则表结构被改过，Q5 执行的时候，报 Table definition has changed, please retry transaction，现象：mysqldump 终止；</li>
+<li>如果在“时刻 2”和“时刻 3”之间到达，mysqldump 占着 t1 的 MDL 读锁，binlog 被阻塞，现象：主从延迟，直到 Q6 执行完成。</li>
+<li>从“时刻 4”开始，mysqldump 释放了 MDL 读锁，现象：没有影响，备份拿到的是 DDL 前的表结构。</li>
+</ol>
+<h2 id="q7-删除一个表里面的前-10000-行数据哪个语句会更好">Q7: 删除一个表里面的前 10000 行数据，哪个语句会更好？</h2>
+<ol>
+<li>直接执行 delete from T limit 10000;</li>
+<li>在一个连接中循环执行 20 次 delete from T limit 500;</li>
+<li>在 20 个连接中同时执行 delete from T limit 500。</li>
+</ol>
+<p>答案：</p>
+<ol>
+<li>单个语句占用时间长，锁时间也比较长；而且大事务还会导致主从延迟。</li>
+<li>第二种相对较好。</li>
+<li>会人为造成锁冲突。</li>
+</ol>
+<h2 id="q8-更新不了">Q8: 更新不了？</h2>
+<p>表构造如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> <span style="color:#f92672">`</span>t<span style="color:#f92672">`</span> (
+    <span style="color:#f92672">`</span>id<span style="color:#f92672">`</span> int(<span style="color:#ae81ff">11</span>) <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    <span style="color:#f92672">`</span><span style="color:#66d9ef">c</span><span style="color:#f92672">`</span> int(<span style="color:#ae81ff">11</span>) <span style="color:#66d9ef">DEFAULT</span> <span style="color:#66d9ef">NULL</span>,
+    <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> (<span style="color:#f92672">`</span>id<span style="color:#f92672">`</span>)
+) ENGINE<span style="color:#f92672">=</span>InnoDB;
+<span style="color:#66d9ef">insert</span> <span style="color:#66d9ef">into</span> t(id, <span style="color:#66d9ef">c</span>) <span style="color:#66d9ef">values</span>(<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>),(<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">2</span>),(<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">3</span>),(<span style="color:#ae81ff">4</span>,<span style="color:#ae81ff">4</span>);
+</code></pre></div><p>执行语句如下：</p>
+<p><img src="/img/mysql45_q_8.png" alt="执行流程事务顺序"></p>
+<p>为什么更新不了？？</p>
+<blockquote>
+<p>正常情况下会返回 Affected rows: 4，则将 id=c 的记录把 c 改为 0。</p>
+</blockquote>
+<p>复现情景1：</p>
+<table>
+<thead>
+<tr>
+<th>session A</th>
+<th>session B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>begin;</td>
+<td></td>
+</tr>
+<tr>
+<td>select * from t;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>update t set c=c+1;</td>
+</tr>
+<tr>
+<td>update t set c=0 where id=c;</td>
+<td></td>
+</tr>
+<tr>
+<td>select * from t;</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>这样，session A 看到的就是我截图的效果了。</p>
+<p>复现情景2：</p>
+<table>
+<thead>
+<tr>
+<th>session A</th>
+<th>session B'</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>begin;</td>
+</tr>
+<tr>
+<td></td>
+<td>select * from t;</td>
+</tr>
+<tr>
+<td>begin;</td>
+<td></td>
+</tr>
+<tr>
+<td>select * from t;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>update t set c=c+1;</td>
+</tr>
+<tr>
+<td></td>
+<td>commit;</td>
+</tr>
+<tr>
+<td>update t set c=0 where id=c;</td>
+<td></td>
+</tr>
+<tr>
+<td>select * from t;</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>这个 session B' 启动的事务比 A 要早，在事务版本的可见性规则里还有一个“活跃事务的判断”，在 session A <strong>视图数组</strong>创建的瞬间，session B' 是活跃的，属于“版本未提交，不可见”这种情况。</p>
+<p>分析：</p>
+<ol>
+<li>session B' 的视图数组 [101]</li>
+<li>session A' 的视图数组 [100]，因为 101 未提交，所以不是 [101, 100]</li>
+<li>然后 session B' 更新了数据，变为 2,3,4,5</li>
+<li>session A' 当前读且去更新数据，但是无符合条件记录，更新 0 条</li>
+<li>session A' 不可重复读，得到事务 A 创建的视图 [100]，不包含 [101] 的修改，结果为1,2,3,4</li>
+</ol>
       </article>
     </section>
 
@@ -387,7 +521,7 @@
       <ul>
 <li><a href="https://github.com/fnesc/University_Projects_Code">University_Projects_Code 🌺</a> ➡️ 大学期间的一些代码记录</li>
 <li><a href="https://github.com/fnesc/Mysql-Injection">Mysql-Injection 🌱</a> ➡️ Mysql 注入天书学习笔记</li>
-<li>其他的就匿了，侵删！ ☞</li>
+<li>其他的就匿了，侵删！</li>
 </ul>
 <p><a href="https://github.com/fnesc">&raquo;我的github地址&laquo;</a></p>
 

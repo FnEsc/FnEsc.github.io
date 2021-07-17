@@ -6,7 +6,34 @@
     <description>Recent content in 归档 on FnEsc Hugo Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-Hans</language>
-    <lastBuildDate>Mon, 12 Jul 2021 14:26:13 +0800</lastBuildDate><atom:link href="https://fnesc.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 17 Jul 2021 13:58:49 +0800</lastBuildDate><atom:link href="https://fnesc.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL 45 讲学习笔记 ☞ 07 事务到底是隔离的还是不隔离的？</title>
+      <link>https://fnesc.github.io/posts/sql45_8/</link>
+      <pubDate>Sat, 17 Jul 2021 13:58:49 +0800</pubDate>
+      
+      <guid>https://fnesc.github.io/posts/sql45_8/</guid>
+      <description>&lt;p&gt;begin/start transaction 命令并不是一个事务的起点，在执行到它们之后的第一个操作 InnoDB 表的语句，事务才真正启动。如果你想要马上启动一个事务，可以使用 start transaction with consistent snapshot 这个命令。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>MySQL 45 讲学习笔记 ☞ 07 行锁功过：怎么减少行锁对性能的影响？</title>
+      <link>https://fnesc.github.io/posts/sql45_7/</link>
+      <pubDate>Sat, 17 Jul 2021 11:11:19 +0800</pubDate>
+      
+      <guid>https://fnesc.github.io/posts/sql45_7/</guid>
+      <description>&lt;p&gt;行锁就是针对数据表中行记录的锁。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>MySQL 45 讲学习笔记 ☞ 06 全局锁和表锁：给表加个字段怎么有这么多阻碍？</title>
+      <link>https://fnesc.github.io/posts/sql45_6/</link>
+      <pubDate>Tue, 13 Jul 2021 18:02:53 +0800</pubDate>
+      
+      <guid>https://fnesc.github.io/posts/sql45_6/</guid>
+      <description>&lt;p&gt;根据加锁的范围，MySQL 里面的锁大致可以分成全局锁、表级锁和行锁三类。&lt;/p&gt;</description>
+    </item>
+    
     <item>
       <title>MySQL 45 讲学习笔记 ☞ 05 深入浅出索引（下）</title>
       <link>https://fnesc.github.io/posts/sql45_5/</link>
