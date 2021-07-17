@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>MySQL 45 讲学习笔记 ☞ 07 事务到底是隔离的还是不隔离的？ | FnEsc Hugo Site</title>
+    <title>MySQL 45 讲学习笔记 ☞ 08 事务到底是隔离的还是不隔离的？ | FnEsc Hugo Site</title>
 
     
 <link href="/img/favicon.ico" rel="shortcut icon" type="image/x-icon" />
@@ -23,7 +23,7 @@
 <link rel="canonical" href="https://fnesc.github.io/posts/sql45_8/" />
 
 
-<meta property="og:title" content="MySQL 45 讲学习笔记 ☞ 07 事务到底是隔离的还是不隔离的？" />
+<meta property="og:title" content="MySQL 45 讲学习笔记 ☞ 08 事务到底是隔离的还是不隔离的？" />
 <meta property="og:description" content="begin/start transaction 命令并不是一个事务的起点，在执行到它们之后的第一个操作 InnoDB 表的语句，事务才真正启动。如果你想要马上启动一个事务，可以使用 start transaction with consistent snapshot 这个命令。" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://fnesc.github.io/posts/sql45_8/" /><meta property="og:image" content="https://fnesc.github.io/img/background.jpg"/><meta property="article:section" content="posts" />
@@ -36,7 +36,7 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://fnesc.github.io/img/background.jpg"/>
 
-<meta name="twitter:title" content="MySQL 45 讲学习笔记 ☞ 07 事务到底是隔离的还是不隔离的？"/>
+<meta name="twitter:title" content="MySQL 45 讲学习笔记 ☞ 08 事务到底是隔离的还是不隔离的？"/>
 <meta name="twitter:description" content="begin/start transaction 命令并不是一个事务的起点，在执行到它们之后的第一个操作 InnoDB 表的语句，事务才真正启动。如果你想要马上启动一个事务，可以使用 start transaction with consistent snapshot 这个命令。"/>
 
 
@@ -148,7 +148,7 @@
   <div class="sixteen wide mobile sixteen wide tablet ten wide computer column markdown-body dream-single" id="dream-save-post-as-img">
     <section class="ui top attached segment">
       <header>
-        <h1 class="ui large header">MySQL 45 讲学习笔记 ☞ 07 事务到底是隔离的还是不隔离的？<span class="sub header">
+        <h1 class="ui large header">MySQL 45 讲学习笔记 ☞ 08 事务到底是隔离的还是不隔离的？<span class="sub header">
             <span class="left">
               @
               
@@ -171,7 +171,7 @@
   <a href="#" class="save-as-image" title="保存为图片" onclick="savePostAsImg()">
     <i class="save icon"></i>
   </a>
-  <a href="https://twitter.com/intent/tweet?text=MySQL%2045%20%e8%ae%b2%e5%ad%a6%e4%b9%a0%e7%ac%94%e8%ae%b0%20%e2%98%9e%2007%20%e4%ba%8b%e5%8a%a1%e5%88%b0%e5%ba%95%e6%98%af%e9%9a%94%e7%a6%bb%e7%9a%84%e8%bf%98%e6%98%af%e4%b8%8d%e9%9a%94%e7%a6%bb%e7%9a%84%ef%bc%9f&url=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_8%2f" title="Twitter">
+  <a href="https://twitter.com/intent/tweet?text=MySQL%2045%20%e8%ae%b2%e5%ad%a6%e4%b9%a0%e7%ac%94%e8%ae%b0%20%e2%98%9e%2008%20%e4%ba%8b%e5%8a%a1%e5%88%b0%e5%ba%95%e6%98%af%e9%9a%94%e7%a6%bb%e7%9a%84%e8%bf%98%e6%98%af%e4%b8%8d%e9%9a%94%e7%a6%bb%e7%9a%84%ef%bc%9f&url=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_8%2f" title="Twitter">
     <i class="twitter icon"></i>
   </a>
   <a href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_8%2f" title="Facebook">
