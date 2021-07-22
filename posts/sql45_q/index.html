@@ -135,6 +135,7 @@
     <li><a href="#q6-当备库用single-transaction-做逻辑备份的时候如果从主库的-binlog-传来一个-ddl-语句会怎么样">Q6: 当备库用–single-transaction 做逻辑备份的时候，如果从主库的 binlog 传来一个 DDL 语句会怎么样？</a></li>
     <li><a href="#q7-删除一个表里面的前-10000-行数据哪个语句会更好">Q7: 删除一个表里面的前 10000 行数据，哪个语句会更好？</a></li>
     <li><a href="#q8-更新不了">Q8: 更新不了？</a></li>
+    <li><a href="#q9-change-buffer-一开始是写内存后掉电重启会不会导致-change-buffer-丢失">Q9: change buffer 一开始是写内存后，掉电重启，会不会导致 change buffer 丢失？</a></li>
   </ul>
 </nav>
     </div>
@@ -387,6 +388,7 @@ Q6:<span style="color:#66d9ef">ROLLBACK</span> <span style="color:#66d9ef">TO</s
 <li>session A' 当前读且去更新数据，但是无符合条件记录，更新 0 条</li>
 <li>session A' 不可重复读，得到事务 A 创建的视图 [100]，不包含 [101] 的修改，结果为1,2,3,4</li>
 </ol>
+<h2 id="q9-change-buffer-一开始是写内存后掉电重启会不会导致-change-buffer-丢失">Q9: change buffer 一开始是写内存后，掉电重启，会不会导致 change buffer 丢失？</h2>
       </article>
     </section>
 
