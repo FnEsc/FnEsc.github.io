@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>MySQL 45 讲学习笔记 ☞ 11 怎么给字符串字段加索引？ | FnEsc Hugo Site</title>
+
+    
+<link href="/img/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+
+
+
+<meta name="author" content="Author Name" />
+<meta name="description" content="选择更优化的字符串索引，如：建立邮箱字段上合理的索引。如果 email 字段没有索引，则相关查询只能做全表扫描。
+" />
+
+
+
+<meta name="generator" content="Hugo 0.84.4" />
+
+<link rel="canonical" href="https://fnesc.github.io/posts/sql45_11/" />
+
+
+<meta property="og:title" content="MySQL 45 讲学习笔记 ☞ 11 怎么给字符串字段加索引？" />
+<meta property="og:description" content="选择更优化的字符串索引，如：建立邮箱字段上合理的索引。如果 email 字段没有索引，则相关查询只能做全表扫描。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://fnesc.github.io/posts/sql45_11/" /><meta property="og:image" content="https://fnesc.github.io/img/background.jpg"/><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2021-07-28T18:47:59+08:00" />
+<meta property="article:modified_time" content="2021-07-28T18:47:59+08:00" />
+
+
+
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://fnesc.github.io/img/background.jpg"/>
+
+<meta name="twitter:title" content="MySQL 45 讲学习笔记 ☞ 11 怎么给字符串字段加索引？"/>
+<meta name="twitter:description" content="选择更优化的字符串索引，如：建立邮箱字段上合理的索引。如果 email 字段没有索引，则相关查询只能做全表扫描。"/>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+<link rel="stylesheet" href="/css/icomoon.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@1.13.1/css/OverlayScrollbars.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css">
+<link rel="stylesheet" href="/css/site.css" />
+
+<style>
+  .ui.header a:not(.item, .ui.button):hover {
+    text-decoration: underline;
+  }
+
+  
+  a:not(.item, .ui.button) {
+    color: seagreen !important;
+  }
+  
+
+  
+
+  
+  body.default {
+    
+    background-color: #fff;
+    
+
+    
+    background-image: url(/img/background.jpg);
+    
+  }
+  
+
+  
+</style>
+
+
+    
+
+
+
+<link rel="stylesheet" data-highlight href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/tomorrow.min.css" />
+
+
+
+
+
+
+
+    
+    <link rel="stylesheet" href="/css/custom.css" />
+    
+  </head>
+
+  <body class="default">
+    
+<nav class="ui secondary menu dream-menu dream-nav">
+
+  <a class="item dream-flip-toggle" title="翻转！">
+    <i class="large link bullseye icon"></i>
+  </a>
+  <a class="item" href="https://fnesc.github.io/" title="首页">
+    <i class="large link home icon"></i>
+  </a>
+  
+  
+</nav>
+
+    <div class="flip-container">
+      <div class="flipper">
+        <section class="front">
+          <div class="dream-max-width">
+            
+<div class="ui relaxed centered grid dream-grid dream-grid-single">
+  
+  
+  
+  
+
+  
+  <aside class="sixteen wide mobile sixteen wide tablet three wide computer column dream-single-aside">
+    
+    <div class="ui segment toc">
+      <nav id="TableOfContents">
+  <ul>
+    <li><a href="#前缀索引的相关">前缀索引的相关</a></li>
+    <li><a href="#前缀索引对覆盖索引的影响">前缀索引对覆盖索引的影响</a></li>
+    <li><a href="#前缀区分度不高倒序存储--hash-字段">前缀区分度不高？倒序存储 &amp;&amp; hash 字段</a></li>
+  </ul>
+</nav>
+    </div>
+    
+
+    
+  </aside>
+  
+  <div class="sixteen wide mobile sixteen wide tablet ten wide computer column markdown-body dream-single" id="dream-save-post-as-img">
+    <section class="ui top attached segment">
+      <header>
+        <h1 class="ui large header">MySQL 45 讲学习笔记 ☞ 11 怎么给字符串字段加索引？<span class="sub header">
+            <span class="left">
+              @
+              
+                
+                  Author Name
+                
+              
+
+              | 
+                  <span data-format="luxon">2021-07-28T18:47:59&#43;08:00</span>
+                
+
+              | 3 分钟阅读
+
+              
+            </span>
+
+            
+            <span class="dream-share">
+  <a href="#" class="save-as-image" title="保存为图片" onclick="savePostAsImg()">
+    <i class="save icon"></i>
+  </a>
+  <a href="https://twitter.com/intent/tweet?text=MySQL%2045%20%e8%ae%b2%e5%ad%a6%e4%b9%a0%e7%ac%94%e8%ae%b0%20%e2%98%9e%2011%20%e6%80%8e%e4%b9%88%e7%bb%99%e5%ad%97%e7%ac%a6%e4%b8%b2%e5%ad%97%e6%ae%b5%e5%8a%a0%e7%b4%a2%e5%bc%95%ef%bc%9f&url=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_11%2f" title="Twitter">
+    <i class="twitter icon"></i>
+  </a>
+  <a href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2ffnesc.github.io%2fposts%2fsql45_11%2f" title="Facebook">
+    <i class="facebook icon"></i>
+  </a>
+</span>
+
+            
+          </span>
+        </h1>
+      </header>
+
+      <article class="main">
+        
+
+        <p>选择更优化的字符串索引，如：建立邮箱字段上合理的索引。如果 email 字段没有索引，则相关查询只能做全表扫描。</p>
+<h2 id="前缀索引的相关">前缀索引的相关</h2>
+<p><strong>MySQL 是支持前缀索引的</strong>，也就是说，你可以定义字符串的一部分作为索引。默认地，如果你创建索引的语句不指定前缀长度，那么索引就会包含整个字符串。</p>
+<p>比如：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">alter</span> <span style="color:#66d9ef">table</span> SUser <span style="color:#66d9ef">add</span> <span style="color:#66d9ef">index</span> index1(email);
+<span style="color:#66d9ef">alter</span> <span style="color:#66d9ef">table</span> SUser <span style="color:#66d9ef">add</span> <span style="color:#66d9ef">index</span> index2(email(<span style="color:#ae81ff">6</span>));   <span style="color:#75715e">-- 只取前 6 个字节作索引
+</span></code></pre></div><p>只取前6的索引，占用的空间会更小，这就是使用前缀索引的优势。但同时，可能会增加额外的记录扫描次数。</p>
+<p>假设执行语句：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">select</span> id,name,email <span style="color:#66d9ef">from</span> SUser <span style="color:#66d9ef">where</span> email<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;zhangssxyz@xxx.com&#39;</span>;
+</code></pre></div><ul>
+<li>如果使用 index1 全字符串索引
+<ol>
+<li>从 index1 索引树找到满足索引值是 <a href="mailto:zhangssxyz@xxx.com">zhangssxyz@xxx.com</a> 的这条记录，取得 ID2 的值；</li>
+<li>到主键上查到主键值是 ID2 的行，判断 email 的值是正确的，将这行记录加入结果集；</li>
+<li>取 index1 索引树上刚刚查到的位置的下一条记录，发现已经不满足 <a href="mailto:email=zhangssxyz@xxx.com">email=zhangssxyz@xxx.com</a> 的条件了，循环结束。</li>
+</ol>
+</li>
+<li>如果使用的是 index2 前6字符串索引
+<ol>
+<li>从 index2 索引树找到满足索引值是 zhangs 的记录，找到的第一个是 ID1；</li>
+<li>到主键上查到主键值是 ID1 的行，判断出 email 的值不是 <a href="mailto:zhangssxyz@xxx.com">zhangssxyz@xxx.com</a>，这行记录丢弃；</li>
+<li>取 index2 上刚刚查到的位置的下一条记录，发现仍然是 zhangs，取出 ID2，再到 ID 索引上取整行然后判断，这次值对了，将这行记录加入结果集；</li>
+<li>重复上一步，直到在 indxe2 上取到的值不是 zhangs 时，循环结束。</li>
+</ol>
+</li>
+</ul>
+<p>这里又回到了，前缀索引的长度影响了索引的区分度。区分度越高越好，意味着重复的键值越少。</p>
+<p>给一个方法：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">select</span> <span style="color:#66d9ef">count</span>(<span style="color:#66d9ef">distinct</span> email) <span style="color:#66d9ef">as</span> L <span style="color:#66d9ef">from</span> SUser;  <span style="color:#75715e">-- 统计有多少个不同值
+</span><span style="color:#75715e"></span>
+mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">select</span> 
+  <span style="color:#66d9ef">count</span>(<span style="color:#66d9ef">distinct</span> <span style="color:#66d9ef">left</span>(email,<span style="color:#ae81ff">4</span>)<span style="color:#960050;background-color:#1e0010">）</span><span style="color:#66d9ef">as</span> L4,
+  <span style="color:#66d9ef">count</span>(<span style="color:#66d9ef">distinct</span> <span style="color:#66d9ef">left</span>(email,<span style="color:#ae81ff">5</span>)<span style="color:#960050;background-color:#1e0010">）</span><span style="color:#66d9ef">as</span> L5,
+  <span style="color:#66d9ef">count</span>(<span style="color:#66d9ef">distinct</span> <span style="color:#66d9ef">left</span>(email,<span style="color:#ae81ff">6</span>)<span style="color:#960050;background-color:#1e0010">）</span><span style="color:#66d9ef">as</span> L6,
+  <span style="color:#66d9ef">count</span>(<span style="color:#66d9ef">distinct</span> <span style="color:#66d9ef">left</span>(email,<span style="color:#ae81ff">7</span>)<span style="color:#960050;background-color:#1e0010">）</span><span style="color:#66d9ef">as</span> L7,
+<span style="color:#66d9ef">from</span> SUser;     <span style="color:#75715e">-- 看不同长度索引的区分度，可以验证损失比例
+</span></code></pre></div><h2 id="前缀索引对覆盖索引的影响">前缀索引对覆盖索引的影响</h2>
+<p>假设执行语句：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#75715e">-- select id,name,email from SUser where email=&#39;zhangssxyz@xxx.com&#39;;   -- 原语句
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">select</span> id,email <span style="color:#66d9ef">from</span> SUser <span style="color:#66d9ef">where</span> email<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;zhangssxyz@xxx.com&#39;</span>;        <span style="color:#75715e">-- 新语句
+</span></code></pre></div><ul>
+<li>如果使用 index1 全字符串索引，覆盖索引了，直接得出 id</li>
+<li>如果使用的是 index2 前 6 字符串索引，需要逐个回表到 id 索引判断 email 字段的值。甚至，即使定义了 email(18) 的前缀索引，即使包含了所有信息，但 InnoDB 还是要回到 id 索引再查一下，因为系统并不确定前缀索引的定义是否截断了完整信息。</li>
+</ul>
+<h2 id="前缀区分度不高倒序存储--hash-字段">前缀区分度不高？倒序存储 &amp;&amp; hash 字段</h2>
+<p><strong>第一种方式是使用倒序存储。</strong></p>
+<p>查询可以这样写：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">select</span> field_list <span style="color:#66d9ef">from</span> t <span style="color:#66d9ef">where</span> id_card <span style="color:#f92672">=</span> reverse(<span style="color:#e6db74">&#39;input_id_card_string&#39;</span>);
+</code></pre></div><p><strong>第二种方式是使用 hash 字段。</strong></p>
+<p>先在表上创建一个整数字段，来保存身份证的校验码，同时在这个字段上创建索引：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">alter</span> <span style="color:#66d9ef">table</span> t <span style="color:#66d9ef">add</span> id_card_crc int unsigned, <span style="color:#66d9ef">add</span> <span style="color:#66d9ef">index</span>(id_card_crc);
+</code></pre></div><p>然后每次插入新记录的时候，都同时用 crc32() 这个函数得到校验码填到这个新字段。由于校验码可能存在冲突，也就是说两个不同的身份证号通过 crc32() 函数得到的结果可能是相同的，所以你的查询语句 where 部分要判断 id_card 的值是否精确相同：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">select</span> field_list <span style="color:#66d9ef">from</span> t <span style="color:#66d9ef">where</span> id_card_crc<span style="color:#f92672">=</span>crc32(<span style="color:#e6db74">&#39;input_id_card_string&#39;</span>) <span style="color:#66d9ef">and</span> id_card<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;input_id_card_string&#39;</span>;
+</code></pre></div><blockquote>
+<p>这里的索引长度才 4 字节。</p>
+</blockquote>
+<p><strong>使用倒序存储和使用 hash 字段这两种方法的异同点：</strong></p>
+<ol>
+<li>都不支持范围查询。（只支持等值查询）</li>
+<li>从占用的额外空间来看，倒序存储方式在主键索引上，不会消耗额外的存储空间，而 hash 字段方法需要增加一个字段。（其实长度和相关的额外空间也都差不多）</li>
+<li>在 CPU 消耗方面，倒序方式每次写和读的时候，都需要额外调用一次 reverse 函数，而 hash 字段的方式需要额外调用一次 crc32() 函数。如果只从这两个函数的计算复杂度来看的话，reverse 函数额外消耗的 CPU 资源会更小些。</li>
+<li>从查询效率上看，使用 hash 字段方式的查询性能相对更稳定一些。因为 crc32 算出来的值虽然有冲突的概率，但是概率非常小，可以认为每次查询的平均扫描行数接近 1。而倒序存储方式毕竟还是用的前缀索引的方式，也就是说还是会增加扫描行数。</li>
+</ol>
+      </article>
+    </section>
+
+    
+
+    
+
+    
+  </div>
+</div>
+
+
+            <footer class="ui basic center aligned segment" style="background-color: transparent;">
+              
+              <p>© 2021 FnEsc Hugo Site</p>
+              
+
+              <p>Powered by <a href="https://gohugo.io/" target="_blank">Hugo</a> with theme <a href="https://github.com/g1eny0ung/hugo-theme-dream" target="_blank">Dream</a>.</p>
+
+              
+            </footer>
+          </div>
+        </section>
+        <section class="back">
+          <div class="dream-max-width">
+            <header class="ui basic very padded segment dream-header">
+  
+  <div class="ui small circular image">
+    <img src="/img/simulink.jpg" alt="avatar" />
+  </div>
+  
+
+  <div class="content">
+    <h1 class="ui medium header">FnEsc 的博客<span class="sub header">一边担心未来，一边浪费现在。</span>
+    </h1>
+
+    <article class="ui horizontal list">
+      
+      <a class="item" href="/posts">
+        <i class="archive icon" title="归档"></i>
+      </a>
+      
+      <a class="item" href="/categories">
+        <i class="th list icon" title="所有分类"></i>
+      </a>
+      <a class="item" href="/tags">
+        <i class="tags icon" title="所有标签"></i>
+      </a>
+    </article>
+
+    
+    
+    
+    
+    
+      
+    
+      
+    
+      
+    
+    
+
+    
+
+    
+    
+    
+          <div class="dream-tags">
+          
+          
+          
+            <a class="ui label" href="/tags/hugo/" title="Hugo">
+              Hugo
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/mysql/" title="MySQL">
+              MySQL
+            </a>
+          
+          
+          
+            <a class="ui label" href="/tags/python3/" title="Python3">
+              Python3
+            </a>
+          
+          </div>
+    
+
+    
+  </div>
+</header>
+
+
+<div class="ui relaxed grid dream-grid dream-back">
+  
+  
+  
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment markdown-body">
+      <div class="ui medium header">关于我</div>
+      <p>FnEsc 的 💜 博客</p>
+<p>自从 2021.07 开始搭建该 hugo 博客，作为记录一些生活/技术上的小笔记</p>
+<p>2020届应届生，毕业与佛山科学技术学院计算机科学与技术专业</p>
+<p>目前职业是 <del>全栈开发程序🐶</del> 打杂工具人</p>
+<p>作为传统行业外企电商的 965，使我并没有很勤奋卷</p>
+<p>不想那么相关工作为 SAP Fiori 应用开发和维护。</p>
+<p>目前主要的技术栈是：</p>
+<blockquote>
+<ul>
+<li>Python Web 端架构</li>
+<li>Django / Odoo 开发</li>
+</ul>
+</blockquote>
+<p>接下来可能想学习的方向是：</p>
+<blockquote>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Python 进阶（流畅的 python）</li>
+<li><input disabled="" type="checkbox"> MySQL 知识巩固（MySQL 实战 45 讲）</li>
+<li><input disabled="" type="checkbox"> Go 开始学习（Go 语言核心 36 讲）</li>
+<li><input disabled="" type="checkbox"> 其他架构/算法尝试学习</li>
+</ul>
+</blockquote>
+    </article>
+  </div>
+  
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment markdown-body">
+      <div class="ui medium header">我的一些开源代码</div>
+      <ul>
+<li><a href="https://github.com/fnesc/University_Projects_Code">University_Projects_Code 🌺</a> ➡️ 大学期间的一些代码记录</li>
+<li><a href="https://github.com/fnesc/Mysql-Injection">Mysql-Injection 🌱</a> ➡️ Mysql 注入天书学习笔记</li>
+<li>其他的就匿了，侵删！</li>
+</ul>
+<p><a href="https://github.com/fnesc">&raquo;我的github地址&laquo;</a></p>
+
+    </article>
+  </div>
+  
+
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    <article class="ui segment">
+      <div class="ui medium header">社交链接</div>
+      <nav class="ui secondary menu dream-menu dream-socials">
+  
+
+  
+  <a class="item" href="mailto:smlin97@outlook.com">
+    <i class="large mail icon" title="Email"></i>
+  </a>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <a class="item" href="https://github.com/fnesc" target="_blank">
+    <i class="large github icon" title="GitHub"></i>
+  </a>
+  
+
+  
+
+  
+</nav>
+
+    </article>
+  </div>
+
+  <div class="sixteen wide mobile eight wide tablet four wide computer column dream-column">
+    
+  </div>
+
+  
+</div>
+
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+
+    
+
+    
+
+    <script>
+  window.background = "#fff"
+  window.defaultDark =  null 
+  window.backgroundDark =  null 
+  window.backgroundImageDark =  null 
+  window.darkNav =  null 
+  window.maxTags =  null 
+  window.hasTwitterEmbed =  null 
+  window.fixedNav =  true 
+
+  if (window.hasTwitterEmbed) {
+    
+    window.twttr = (function (d, s, id) {
+      var js,
+        fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {}
+      if (d.getElementById(id)) return t
+      js = d.createElement(s)
+      js.id = id
+      js.src = 'https://platform.twitter.com/widgets.js'
+      fjs.parentNode.insertBefore(js, fjs)
+
+      t._e = []
+      t.ready = function (f) {
+        t._e.push(f)
+      }
+
+      return t
+    })(document, 'script', 'twitter-wjs')
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@1.13.1/js/jquery.overlayScrollbars.min.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/theme.js"></script>
+
+    
+
+
+<script src="https://cdn.jsdelivr.net/npm/luxon@1.26.0"></script>
+
+<script>
+  format()
+
+  function format() {
+    $('span[data-format="luxon"]').each(function () {
+      var date = $(this).text()
+
+      $(this).text(luxon.DateTime.fromISO(date, { locale: "zh" }).toFormat("yyyy年MM月dd日"))
+    })
+  }
+</script>
+
+
+
+<script src="/js/scrollToTop.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
+
+
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/clojure.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ocaml.min.js"></script>
+
+
+
+<script>
+  hljs.highlightAll()
+  setHighlightTheme()
+
+  function setHighlightTheme() {
+    var isDark = localStore.getItem('hugo-theme-dream-is-dark')
+    isDark = isDark ? isDark : window.defaultDark ? 'y' : isDark
+
+    var lightTheme = "tomorrow"
+    var darkTheme = "tomorrow-night"
+    var theme = isDark === 'y' ? darkTheme : lightTheme
+
+    $('link[data-highlight]').attr('href', 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/' + theme + '.min.css')
+    $('pre').css('background', isDark === 'y' ? '#333' : '')
+  }
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.1"></script>
+<script src="/js/post.js" defer></script>
+
+
+    
+
+    
+  </body>
+</html>

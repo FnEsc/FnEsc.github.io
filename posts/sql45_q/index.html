@@ -137,6 +137,7 @@
     <li><a href="#q8-更新不了">Q8: 更新不了？</a></li>
     <li><a href="#q9-change-buffer-一开始是写内存后掉电重启会不会导致-change-buffer-丢失">Q9: change buffer 一开始是写内存后，掉电重启，会不会导致 change buffer 丢失？</a></li>
     <li><a href="#q10-影响预计扫描行数-rows-值的因素">Q10: 影响预计扫描行数 rows 值的因素？</a></li>
+    <li><a href="#q11-如何设计登录名">Q11: 如何设计登录名？</a></li>
   </ul>
 </nav>
     </div>
@@ -161,7 +162,7 @@
                   <span data-format="luxon">2021-07-12T11:46:12&#43;08:00</span>
                 
 
-              | 5 分钟阅读
+              | 6 分钟阅读
 
               
             </span>
@@ -436,7 +437,14 @@ Q6:<span style="color:#66d9ef">ROLLBACK</span> <span style="color:#66d9ef">TO</s
 </tbody>
 </table>
 <p>而如果没有 session A 的配合，只是单独执行 delete from t 、call idata()、explain 这三句话，会看到 rows 字段其实还是 10000 左右。</p>
-<p>这是什么原因呢？</p>
+<p>这是什么原因呢？（隔离级别为 RR ，Repeatable Read，可重复读）</p>
+<p><strong>答：</strong></p>
+<p>session A 开启了事务并没有提交，所以之前插入的 10 万行数据是不能删除的。这样，之前的数据每一行数据都有两个版本，旧版本是 delete 之前的数据，新版本是标记为 deleted 的数据。</p>
+<p>这样，索引 a 上的数据其实就有两份。</p>
+<p>主键上的数据也不能删，那没有使用 force index 的语句，使用 explain 命令看到的扫描行数还是 100000 左右。</p>
+<p><img src="/img/mysql45_q_10.png" alt="explain 还是 10w 左右"></p>
+<p>因为，这里是主键，主键是直接按照表的行数来估计的。而表的行数，优化器直接用的是 <code>show table status</code> 的值。</p>
+<h2 id="q11-如何设计登录名">Q11: 如何设计登录名？</h2>
       </article>
     </section>
 
