@@ -136,6 +136,7 @@
     <li><a href="#q7-删除一个表里面的前-10000-行数据哪个语句会更好">Q7: 删除一个表里面的前 10000 行数据，哪个语句会更好？</a></li>
     <li><a href="#q8-更新不了">Q8: 更新不了？</a></li>
     <li><a href="#q9-change-buffer-一开始是写内存后掉电重启会不会导致-change-buffer-丢失">Q9: change buffer 一开始是写内存后，掉电重启，会不会导致 change buffer 丢失？</a></li>
+    <li><a href="#q10-影响预计扫描行数-rows-值的因素">Q10: 影响预计扫描行数 rows 值的因素？</a></li>
   </ul>
 </nav>
     </div>
@@ -160,7 +161,7 @@
                   <span data-format="luxon">2021-07-12T11:46:12&#43;08:00</span>
                 
 
-              | 4 分钟阅读
+              | 5 分钟阅读
 
               
             </span>
@@ -389,6 +390,53 @@ Q6:<span style="color:#66d9ef">ROLLBACK</span> <span style="color:#66d9ef">TO</s
 <li>session A' 不可重复读，得到事务 A 创建的视图 [100]，不包含 [101] 的修改，结果为1,2,3,4</li>
 </ol>
 <h2 id="q9-change-buffer-一开始是写内存后掉电重启会不会导致-change-buffer-丢失">Q9: change buffer 一开始是写内存后，掉电重启，会不会导致 change buffer 丢失？</h2>
+<p>答：不会丢失。</p>
+<p>虽然是只更新内存，但是在事务提交的时候，我们把 change buffer 的操作也记录到 redo log 里了，所以崩溃恢复的时候，change buffer 也能找回来。</p>
+<p>merge 的执行流程是这样的：</p>
+<ol>
+<li>从磁盘读入数据页到内存（老版本的数据页）；</li>
+<li>从 change buffer 里找出这个数据页的 change buffer 记录 (可能有多个），依次应用，得到新版数据页；</li>
+<li>写 redo log。这个 redo log 包含了数据的变更和 change buffer 的变更。</li>
+</ol>
+<p>到这里 merge 过程就结束了。这时候，数据页和内存中 change buffer 对应的磁盘位置都还没有修改，属于脏页，之后各自刷回自己的物理数据，就是另外一个过程了。</p>
+<h2 id="q10-影响预计扫描行数-rows-值的因素">Q10: 影响预计扫描行数 rows 值的因素？</h2>
+<p>通过 session A 的配合，让 session B 删除数据后又重新插入了一遍数据，然后就发现 explain 结果中，rows 字段从 10001 变成 37000 多。</p>
+<table>
+<thead>
+<tr>
+<th>session A</th>
+<th>session B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>start transaction with consistent snapshot;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>delete from t;</td>
+</tr>
+<tr>
+<td></td>
+<td>call idata();</td>
+</tr>
+<tr>
+<td></td>
+<td> </td>
+</tr>
+<tr>
+<td></td>
+<td>explain select * from t where a between 10000 and 20000;</td>
+</tr>
+<tr>
+<td>commit;</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>而如果没有 session A 的配合，只是单独执行 delete from t 、call idata()、explain 这三句话，会看到 rows 字段其实还是 10000 左右。</p>
+<p>这是什么原因呢？</p>
       </article>
     </section>
 
